@@ -6,8 +6,8 @@ class BaseEntity(models.Model):
     OPTIONS = [('Enabled','enabled'),
                ('Dissabled','Disabled')]
     status = models.CharField(choices = OPTIONS, max_length = 9)
-    fecha_creacion = models.DateTimeField(auto_now_add = True)
-    fecha_eliminacion = models.DateTimeField(blank = True, null = True)
+    created_date = models.DateTimeField(auto_now_add = True)
+    deleted_date = models.DateTimeField(blank = True, null = True)
 
     class Meta:
         abstract = True
@@ -26,13 +26,20 @@ class Person(BaseEntity):
     last_name = models.CharField(max_length = 30)
 
     def __str__(self):
-        return self.firt_name
+        return self.firt_name +' '+self.last_name
 
 class Faculty(Entity):
     pass
 
+    def __str__(self):
+        return self.name
+
+
 class School(Entity):
-    facultad = models.ForeignKey(Faculty, on_delete=models.CASCADE)
+    fk_facultad = models.ForeignKey(Faculty, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
 
 class Section(Entity):
     OPTIONS2 = [('Mandatory','Mandatory'),
@@ -43,11 +50,14 @@ class Section(Entity):
     ht = models.DecimalField(max_digits=4, decimal_places = 2)
     hp = models.DecimalField(max_digits=4, decimal_places = 2)
     hl = models.DecimalField(max_digits=4, decimal_places = 2)
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    fk_school = models.ForeignKey(School, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
 
 class Enrollment(BaseEntity):
     OPTIONS2 = [('Student','Student'),
                 ('Teacher','Teacher')]
     tipo = models.CharField(choices = OPTIONS2, max_length = 9)
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE)
+    fk_person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    fk_section = models.ForeignKey(Section, on_delete=models.CASCADE)
