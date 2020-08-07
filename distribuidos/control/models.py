@@ -32,7 +32,9 @@ class Faculty(Entity):
     pass
 
     def __str__(self):
+        ordering = ['created_date']
         return self.name
+
 
 
 class School(Entity):
