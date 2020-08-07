@@ -26,7 +26,7 @@ class Person(BaseEntity):
     last_name = models.CharField(max_length = 30)
 
     def __str__(self):
-        return self.firt_name +' '+self.last_name
+        return self.first_name +' '+self.last_name
 
 class Faculty(Entity):
     pass
