@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils.timezone import now
 
-from .models import Faculty,Person, School, Section
-from .serializers import FacultySerializer, PersonSerializer, SchoolSerializer, SectionSerializer
+from .models import Faculty,Person, School, Section, Enrollment
+from .serializers import FacultySerializer, PersonSerializer, SchoolSerializer, SectionSerializer, EnrollmentSerializer
 
 # Create your views here.
 
@@ -166,4 +166,89 @@ def section_detail(request, pk):
         section.status = 'disabled'
         section.deleted_date = now()
         section.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+def section_students(request, pk):
+    try:
+        section = Section.objects.get(id=pk, status='enabled') 
+    except Section.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        fk_person = []
+        enrollment = Enrollment.objects.filter(fk_section_id=section.id, status='enabled', tipo='student').values('fk_person_id')
+        for e in enrollment:
+            fk_person.append(e['fk_person_id'])
+        fk_person.append(' ')
+        people = Person.objects.raw(f'SELECT * FROM control_person WHERE status = "enabled" and id IN {tuple(fk_person)}')
+        serializer = PersonSerializer(people, many=True)
+        return Response(serializer.data)
+
+@api_view(['GET'])
+def section_teacher(request, pk):
+    try:
+        section = Section.objects.get(id=pk, status='enabled') 
+    except Section.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        fk_person = []
+        enrollment = Enrollment.objects.filter(fk_section_id=section.id, status='enabled', tipo='teacher').values('fk_person_id')
+        for e in enrollment:
+            fk_person.append(e['fk_person_id'])
+        fk_person.append(' ')
+        people = Person.objects.raw(f'SELECT * FROM control_person WHERE status = "enabled" and id IN {tuple(fk_person)}')
+        serializer = PersonSerializer(people, many=True)
+        return Response(serializer.data)
+
+@api_view(['GET', 'POST'])
+def enrollment_list(request):
+    if request.method == 'GET':
+        enrollments = Enrollment.objects.filter(status='enabled')
+        serializer = EnrollmentSerializer(enrollments, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        Person = None
+        enrollment = Enrollment.objects.filter(status='enabled').values('fk_person_id')
+        serializer = EnrollmentSerializer(data=request.data)
+
+        for e in enrollment:
+            if e['fk_person_id'] == request.data.get('fk_person_id'):
+                Person = True
+        if serializer.is_valid() and Person == None:
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def enrollment_detail(request, pk):
+    try:
+        enrollment = Enrollment.objects.get(id=pk, status='enabled')
+    except Person.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = EnrollmentSerializer(enrollment)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        Person = None
+        personas = Enrollment.objects.filter(status='enabled').values('fk_person_id')
+        serializer = EnrollmentSerializer(enrollment, data=request.data)
+
+        for e in personas:
+            if e['fk_person_id'] == request.data.get('fk_person_id'):
+                Person = True
+                
+        if serializer.is_valid() and Person == None:
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        enrollment.status = 'disabled'
+        enrollment.deleted_date = now()
+        enrollment.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
