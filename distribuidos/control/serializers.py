@@ -6,7 +6,7 @@ from django.utils.timezone import now
 class FacultySerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(max_length=20, required=False)
-    description = serializers.CharField(max_length=30, required=False)
+    description = serializers.CharField(max_length=50, required=False)
     status = serializers.CharField(default='enabled', max_length=50, required=False)
     created_date = serializers.DateTimeField(default=now, required=False)
     deleted_date = serializers.DateTimeField(required=False)
@@ -46,7 +46,7 @@ class PersonSerializer(serializers.Serializer):
         Update and return an existing `Person` instance, given the validated data.
         """
         instance.dni = validated_data.get('dni', instance.dni)
-        instance.firt_name = validated_data.get('firt_name', instance.first_name)
+        instance.firt_name = validated_data.get('firt_name', instance.firt_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.save()
         return instance
@@ -72,6 +72,31 @@ class SchoolSerializer(serializers.Serializer):
         """
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get('description', instance.description)
-        instance.fk_facultad = validated_data.get('fk_facultad', instance.fk_facultad)
+        instance.fk_facultad_id = validated_data.get('fk_facultad_id', instance.fk_facultad_id)
+        instance.save()
+        return instance
+
+class SecctionSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(max_length=50, required=False)
+    description = serializers.CharField(max_length=50, required=False)
+    status = serializers.CharField(default='enabled', max_length=50, required=False)
+    created_date = serializers.DateTimeField(default=now, required=False)
+    deleted_date = serializers.DateTimeField(required=False)
+    fk_facultad_id = serializers.IntegerField(required=False)
+
+    def create(self, validated_data):
+        """
+        Create and return a new `School` instance, given the validated data.
+        """
+        return School.objects.create(**validated_data)
+    
+    def update(self, instance, validated_data):
+        """
+        Update and return an existing `School` instance, given the validated data.
+        """
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.fk_facultad_id = validated_data.get('fk_facultad_id', instance.fk_facultad_id)
         instance.save()
         return instance
