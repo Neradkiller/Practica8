@@ -3,8 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.utils.timezone import now
 
-from .models import Faculty,Person, School
-from .serializers import FacultySerializer, PersonSerializer, SchoolSerializer
+from .models import Faculty,Person, School, Section
+from .serializers import FacultySerializer, PersonSerializer, SchoolSerializer, SectionSerializer
 
 # Create your views here.
 
@@ -126,4 +126,44 @@ def school_detail(request, pk):
         school.status = 'disabled'
         school.deleted_date = now()
         school.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET', 'POST'])
+def section_list(request):
+
+    if request.method == 'GET':
+        sections = Section.objects.filter(status='enabled')
+        serializer = SectionSerializer(sections, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        serializer = SectionSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def section_detail(request, pk):
+
+    try:
+        section = Section.objects.get(id=pk, status='enabled')
+    except Section.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = SectionSerializer(section)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = SectionSerializer(section, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        section.status = 'disabled'
+        section.deleted_date = now()
+        section.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
